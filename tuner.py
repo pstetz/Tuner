@@ -15,53 +15,7 @@ sns.set()
 
 ### Custom
 from info import freq_to_notes
-
-
-"""
-Stream functions
-"""
-def open_stream(config):
-    """ Opens a pyaudio stream that's needed to record """
-    p = pyaudio.PyAudio()
-    stream = p.open(
-        format = config["format"],
-        channels = config["channels"],
-        rate = config["rate"],
-        input = True,
-        frames_per_buffer = config["chunk"]
-    )
-    return p, stream
-
-def record_wav(stream, N, CHUNK):
-    """ Records N times in units of CHUNK """
-    frames = []
-    for i in range(N):
-        data = stream.read(CHUNK)
-        frames.append(data)
-    return np.fromstring(b"".join(frames), 'Int16')
-
-def close_stream(p, stream):
-    """ Close the pyaudio stream """
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
-
-def sample(seconds, stream_config):
-    """ Samples a recording """
-    ### Open a stream
-    p, stream = open_stream(stream_config)
-
-    ### Get sampling rate and CHUNK from the stream
-    chunk = stream_config["chunk"]
-    sampling_rate = stream_config["rate"]
-
-    ### Sample
-    N = int(seconds / (chunk / sampling_rate))
-    data = record_wav(stream, N, chunk)
-
-    ### Close the stream
-    close_stream(p, stream)
-    return data
+from stream import sample
 
 
 """
