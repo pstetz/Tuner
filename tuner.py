@@ -84,7 +84,8 @@ def process_fft(signal, config):
 
     ### Constant height
     max_signal = np.max(fft_signal)
-    fft_signal = np.true_divide(fft_signal, max_signal)
+    if max_signal > 0:
+        fft_signal = np.true_divide(fft_signal, max_signal)
     return fft_signal
 
 def find_peak(fft_signal):
@@ -167,6 +168,8 @@ axarr[1].set_xscale("log")
 axarr[1].set_xlabel("Pitch")
 axarr[1].set_title("Fourier Transform")
 
+### Quick updates were hard to implement.  Thank you to:
+### https://stackoverflow.com/a/4098938/9104642
 while True:
     new_raw = sample(SECONDS, stream_config)
     new_fft = process_fft(new_raw, fft_config)
