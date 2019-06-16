@@ -69,8 +69,12 @@ def determine_note(freq):
         raise Exception("Note definition is incorrect for %s" % str(note))
     return name + sign
 
-def determine_relative_pitch(closest, peak):
-    return "flat" if closest - peak < 0 else "sharp"
+def determine_relative_pitch(closest, peak, threshold=0.3):
+    if abs(closest - peak) < threshold:
+        return "On pitch with %s"
+    elif closest - peak < 0:
+        return "Flat of %s"
+    return "Sharp of %s"
 
 
 """
@@ -134,7 +138,6 @@ plot_config = {
 }
 freq_message    = "Strongest frequency: %s"
 closest_message = "Closest frequency: %s"
-note_message    = "Your %s of %s"
 
 
 """
@@ -199,7 +202,7 @@ while True:
     peak_plot.set_data([last_peak, last_peak], [0, 1])
     text_freq.set_text(freq_message % new_peak)
     text_closest.set_text(closest_message % str(new_closest))
-    text_note.set_text(note_message % (new_relative, new_note))
+    text_note.set_text(new_relative % new_note)
     fft_plot.set_ydata(new_fft)
 
     ### Refresh
