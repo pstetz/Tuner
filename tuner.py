@@ -56,6 +56,22 @@ def find_closest_note(frequency):
     assert closest_note is not None, "Closest note was not found"
     return closest_note
 
+def determine_note(freq):
+    note = freq_to_notes[freq]
+    name = note["note"]
+    if note["alter"] == 1:
+        sign = "#"
+    elif note["alter"] == 0:
+        sign = ""
+    elif note["alter"] == -1:
+        sign = "♭"
+    else:
+        raise Exception("Note definition is incorrect for %s" % str(note))
+    return name + sign
+
+def determine_relative_pitch(closest, peak):
+    return "flat" if closest - peak < 0 else "sharp"
+
 
 """
 Visualization functions
@@ -103,41 +119,48 @@ fft_config = {
 plot_config = {
     "seconds": SECONDS,
     "figsize": (14, 5),
+
+    "RAW_LINEWIDTH": 0.2,
+    "FFT_LINEWIDTH": 0.7,
+    "PEAK_LINEWIDTH": 1,
+
     "Y_LIM_MAX": 1.5,
     "X_TEXT_FREQ": 1,
-    "Y_TEXT_FREQ": 1.1,
+    "Y_TEXT_FREQ": 1.4,
     "X_TEXT_NOTE": 1,
-    "Y_TEXT_NOTE": 1.25,
+    "Y_TEXT_NOTE": 1.1,
     "X_TEXT_CLOSEST": 1,
-    "Y_TEXT_CLOSEST": 1.4,
+    "Y_TEXT_CLOSEST": 1.25,
 }
-freq_message = "Strongest frequency: %s"
-note_message = "Your %s of %s"
+freq_message    = "Strongest frequency: %s"
 closest_message = "Closest frequency: %s"
+note_message    = "Your %s of %s"
 
 
 """
 Main
 """
 
+### Initialize plot
 plt.ion()
-
 fig, axarr = plt.subplots(1, 2)
 
-raw_signal = sample(SECONDS, stream_config)
-x = np.linspace(0, SECONDS, len(raw_signal))
-
-fft_signal = process_fft(raw_signal, fft_config)
-fft_peak = find_peak(fft_signal)
+### Baseline values
+raw_signal   = sample(SECONDS, stream_config)
+x            = np.linspace(0, SECONDS, len(raw_signal))
+fft_signal   = process_fft(raw_signal, fft_config)
+fft_peak     = find_peak(fft_signal)
 closest_note = find_closest_note(fft_peak)
 
-raw_plot, = axarr[0].plot(x, raw_signal, linewidth=0.3)
-fft_plot, = axarr[1].plot(fft_signal, linewidth=0.3)
-peak_plot, = axarr[1].plot(fft_peak, color="black", linewidth=1)
+### Plotting
+raw_plot,  = axarr[0].plot(x, raw_signal, linewidth=plot_config["RAW_LINEWIDTH"])
+fft_plot,  = axarr[1].plot(fft_signal, linewidth=plot_config["FFT_LINEWIDTH"])
+peak_plot, = axarr[1].plot(fft_peak, color="black", linewidth=plot_config["PEAK_LINEWIDTH"])
 
-text_note = axarr[1].text(plot_config["X_TEXT_NOTE"], plot_config["Y_TEXT_NOTE"],  "")
-text_freq = axarr[1].text(plot_config["X_TEXT_FREQ"], plot_config["Y_TEXT_FREQ"],  "")
+### Plot text
+text_freq    = axarr[1].text(plot_config["X_TEXT_FREQ"], plot_config["Y_TEXT_FREQ"],  "")
 text_closest = axarr[1].text(plot_config["X_TEXT_CLOSEST"], plot_config["Y_TEXT_CLOSEST"],  "")
+text_note    = axarr[1].text(plot_config["X_TEXT_NOTE"], plot_config["Y_TEXT_NOTE"],  "")
 
 ### Raw plot settings
 axarr[0].set_ylim(-1000, 1000)
@@ -149,36 +172,27 @@ axarr[1].set_xlim(1, 1000)
 axarr[1].set_ylim(0, plot_config["Y_LIM_MAX"])
 axarr[1].set_xscale("log")
 axarr[1].set_xlabel("Pitch")
-axarr[1].set_title("Fourier Transform")
+axarr[1].set_title("Frequency signal")
 
 ### Quick updates were hard to implement.  Thank you to:
 ### https://stackoverflow.com/a/4098938/9104642
 ### Updating text needed help from:
 ### https://stackoverflow.com/a/39228262/9104642
-def determine_note(freq):
-    note = freq_to_notes[freq]
-    name = note["note"]
-    if note["alter"] == 1:
-        sign = "#"
-    elif note["alter"] == 0:
-        sign = ""
-    elif note["alter"] == -1:
-        sign = "♭"
-    else:
-        raise Exception("Note definition is incorrect for %s" % str(note))
-    return name + sign
-
 last_peak = fft_peak
 while True:
     ### Recalculate
-    new_raw     = sample(SECONDS, stream_config)
-    new_fft     = process_fft(new_raw, fft_config)
-    new_peak    = find_peak(new_fft)
+    new_raw  = sample(SECONDS, stream_config)
+    new_fft  = process_fft(new_raw, fft_config)
+    new_peak = find_peak(new_fft)
+
+    ### Use last peak if signal died off
     if new_peak != 0:
         last_peak = new_peak
-    new_closest = find_closest_note(last_peak)
-    new_note = determine_note(new_closest)
-    new_relative = "flat" if new_closest - new_peak < 0 else "sharp"
+
+    ### Get information for messages
+    new_closest  = find_closest_note(last_peak)
+    new_note     = determine_note(new_closest)
+    new_relative = determine_relative_pitch(new_closest, new_peak)
 
     ### Redraw
     raw_plot.set_ydata(new_raw)
@@ -188,7 +202,7 @@ while True:
     text_note.set_text(note_message % (new_relative, new_note))
     fft_plot.set_ydata(new_fft)
 
+    ### Refresh
     fig.canvas.draw()
     fig.canvas.flush_events()
-
 
