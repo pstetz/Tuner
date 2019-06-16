@@ -1,7 +1,6 @@
 """
 Imports
 """
-print("Getting imports...")
 
 ### Main imports
 import pyaudio
@@ -13,8 +12,6 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set()
-
-print("Imports done.")
 
 
 """
@@ -139,7 +136,6 @@ plot_config = {
     "seconds": SECONDS,
     "figsize": (14, 5),
 }
-me = True
 
 
 """
@@ -154,9 +150,11 @@ raw_signal = sample(SECONDS, stream_config)
 x = np.linspace(0, SECONDS, len(raw_signal))
 
 fft_signal = process_fft(raw_signal, fft_config)
+fft_peak = find_peak(fft_signal)
 
 raw_plot, = axarr[0].plot(x, raw_signal)
 fft_plot, = axarr[1].plot(fft_signal)
+peak_plot, = axarr[1].plot(fft_peak, color="black", linewidth=3)
 
 axarr[0].set_ylim(-1000, 1000)
 axarr[0].set_xlabel("Seconds")
@@ -173,8 +171,10 @@ axarr[1].set_title("Fourier Transform")
 while True:
     new_raw = sample(SECONDS, stream_config)
     new_fft = process_fft(new_raw, fft_config)
+    new_peak = find_peak(new_fft)
 
     raw_plot.set_ydata(new_raw)
+    peak_plot.set_data([new_peak, new_peak], [0, 2])
     fft_plot.set_ydata(new_fft)
     fig.canvas.draw()
     fig.canvas.flush_events()
