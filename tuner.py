@@ -81,6 +81,10 @@ def process_fft(signal, config):
     fft_signal[:range_min] = 0
     fft_signal[range_max:] = 0
     fft_signal[fft_signal < noise_cutoff] = 0
+
+    ### Constant height
+    max_signal = np.max(fft_signal)
+    fft_signal = np.true_divide(fft_signal, max_signal)
     return fft_signal
 
 def find_peak(fft_signal):
@@ -142,20 +146,33 @@ Main
 """
 
 plt.ion()
-fig = plt.figure()
-ax = fig.add_subplot(111)
 
-data = sample(SECONDS, stream_config)
-x = np.linspace(0, SECONDS, len(data))
-y = data
+fig, axarr = plt.subplots(1, 2)
 
-line1, = ax.plot(x, y, "r-")
-ax.set_ylim(-1000, 1000)
-ax.set_xlabel("Seconds")
+raw_signal = sample(SECONDS, stream_config)
+x = np.linspace(0, SECONDS, len(raw_signal))
+
+fft_signal = process_fft(raw_signal, fft_config)
+
+raw_plot, = axarr[0].plot(x, raw_signal)
+fft_plot, = axarr[1].plot(fft_signal)
+
+axarr[0].set_ylim(-1000, 1000)
+axarr[0].set_xlabel("Seconds")
+axarr[0].set_title("Raw signal")
+
+axarr[1].set_xlim(1, 1000)
+axarr[1].set_ylim(0, 1.2)
+axarr[1].set_xscale("log")
+axarr[1].set_xlabel("Pitch")
+axarr[1].set_title("Fourier Transform")
+
 while True:
-    new_y = sample(SECONDS, stream_config)
+    new_raw = sample(SECONDS, stream_config)
+    new_fft = process_fft(new_raw, fft_config)
 
-    line1.set_ydata(new_y)
+    raw_plot.set_ydata(new_raw)
+    fft_plot.set_ydata(new_fft)
     fig.canvas.draw()
     fig.canvas.flush_events()
 
