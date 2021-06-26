@@ -107,7 +107,7 @@ def plot_sample(signal, fft_config, plot_config):
 """
 Configuration
 """
-SECONDS = 0.3
+SECONDS = 1
 ITERATIONS = 20
 stream_config = {
     "chunk": 1024,
@@ -118,7 +118,7 @@ stream_config = {
 fft_config = {
     "noise_cutoff": 100000,
     "range_min": 12,   # c0 is 16.35 Hz
-    "range_max": 1000, # b8 is 7902.13 Hz
+    "range_max": 8000, # b8 is 7902.13 Hz
 }
 plot_config = {
     "seconds": SECONDS,
@@ -129,11 +129,11 @@ plot_config = {
     "PEAK_LINEWIDTH": 1,
 
     "Y_LIM_MAX": 1.5,
-    "X_TEXT_FREQ": 1,
+    "X_TEXT_FREQ": fft_config["range_min"],
     "Y_TEXT_FREQ": 1.4,
-    "X_TEXT_NOTE": 1,
+    "X_TEXT_NOTE": fft_config["range_min"],
     "Y_TEXT_NOTE": 1.1,
-    "X_TEXT_CLOSEST": 1,
+    "X_TEXT_CLOSEST": fft_config["range_min"],
     "Y_TEXT_CLOSEST": 1.25,
 }
 freq_message    = "Strongest frequency: %s"
@@ -171,7 +171,7 @@ axarr[0].set_xlabel("Seconds")
 axarr[0].set_title("Raw signal")
 
 ### Fourier plot settings
-axarr[1].set_xlim(1, 1000)
+axarr[1].set_xlim(fft_config["range_min"], fft_config["range_max"])
 axarr[1].set_ylim(0, plot_config["Y_LIM_MAX"])
 axarr[1].set_xscale("log")
 axarr[1].set_xlabel("Pitch")
